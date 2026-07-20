@@ -20,6 +20,29 @@
   .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--amber); }
   .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
 
+  .nav-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 24px;
+    overflow-x: auto;
+  }
+  .nav-bar a {
+    color: var(--grey);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-bar a:hover { border-color: var(--border); color: var(--text); }
+  .nav-bar a.active { border-color: var(--amber); color: var(--amber); background: rgba(255,170,0,0.05); }
+
   .content {
     flex: 1;
     padding: 24px;
@@ -166,6 +189,13 @@
       <div class="sub">DAILY SHELL REPORT</div>
     </div>
     <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
+  </div>
+  <div class="nav-bar">
+    <a href="../bookforge/">BOOKFORGE</a>
+    <a href="../alien/">ALIEN</a>
+    <a href="../hobby/">HOBBY</a>
+    <a href="../cli-log/" class="active">CLI-LOG</a>
+    <a href="../charforge/">CHARFORGE</a>
   </div>
 
   <div class="content">

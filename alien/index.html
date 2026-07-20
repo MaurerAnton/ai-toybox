@@ -20,6 +20,29 @@
   .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--green); }
   .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
 
+  .nav-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 24px;
+    overflow-x: auto;
+  }
+  .nav-bar a {
+    color: var(--grey);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-bar a:hover { border-color: var(--border); color: var(--text); }
+  .nav-bar a.active { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.05); }
+
   .content {
     flex: 1;
     display: flex;
@@ -196,6 +219,13 @@
     </div>
     <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
   </div>
+  <div class="nav-bar">
+    <a href="../bookforge/">BOOKFORGE</a>
+    <a href="../alien/" class="active">ALIEN</a>
+    <a href="../hobby/">HOBBY</a>
+    <a href="../cli-log/">CLI-LOG</a>
+    <a href="../charforge/">CHARFORGE</a>
+  </div>
 
   <div class="content">
     <div class="left-panel">
@@ -209,7 +239,7 @@
       <div class="input-section">
         <h3>EXPLAIN IT (3-5 sentences)</h3>
         <textarea id="explanation" placeholder="Type your explanation of this concept for an alien who knows nothing about Earth..."></textarea>
-        <div class="char-count"><span id="char-count">0</span>/500</div>
+        <div class="char-count"><span id="char-count">0</span> chars</div>
       </div>
 
       <div class="actions">
@@ -307,12 +337,7 @@ function newConcept() {
 }
 
 document.getElementById('explanation').addEventListener('input', function() {
-  var len = this.value.length;
-  document.getElementById('char-count').textContent = len;
-  if (len > 500) {
-    this.value = this.value.substring(0, 500);
-    document.getElementById('char-count').textContent = '500';
-  }
+  document.getElementById('char-count').textContent = this.value.length;
 });
 
 async function submitExplanation() {
