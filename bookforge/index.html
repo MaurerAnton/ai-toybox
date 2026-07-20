@@ -213,7 +213,6 @@
     <a href="../bookforge/" class="active">BOOKFORGE</a>
     <a href="../alien/">ALIEN</a>
     <a href="../hobby/">HOBBY</a>
-    <a href="../cli-log/">CLI-LOG</a>
     <a href="../charforge/">CHARFORGE</a>
   </div>
 
@@ -431,104 +430,58 @@ function splitPages(text) {
   return chapters.map(function(c) { return c.trim(); }).filter(function(c) { return c.length > 0; });
 }
 
-// ── SVG Cover Generator ──
-function generateCoverSVG(title, author, quote, genre) {
-  // Pick gradient based on genre mood
-  var gradients = {
-    'Dark Fantasy': ['#1a0a2e', '#3d1a78'],
-    'Sci-Fi Noir': ['#0a0a1a', '#1a2a4a'],
-    'Cyberpunk': ['#0a0a1a', '#1a0a2e'],
-    'Steampunk': ['#1a1208', '#3d2a0a'],
-    'Cosmic Horror': ['#0a0a0a', '#1a0a1a'],
-    'default': ['#0a0a1a', '#1a1a3a']
-  };
-  var cols = gradients[genre] || gradients['default'];
+// ── AI Cover Image via Pollinations.ai (free, no key) ──
+var GENRE_PROMPTS = {
+  'Dark Fantasy': 'dark gothic castle, mystical fog, ancient runes, dramatic lighting, epic fantasy art, oil painting style',
+  'Sci-Fi Noir': 'futuristic neon city at night, rain reflections, detective silhouette, cyberpunk noir atmosphere',
+  'Magical Realism': 'surreal floating objects in a quiet room, dreamlike light, photorealistic magical elements',
+  'Cosmic Horror': 'tentacled eldritch entity in deep space, cosmic dread, H.R. Giger inspired, dark atmosphere',
+  'Steampunk': 'brass clockwork machinery, steam pipes, Victorian laboratory, warm amber lighting',
+  'Cyberpunk': 'neon-lit megacity skyline, holographic ads, rain-soaked streets, high-tech low-life',
+  'Gothic Romance': 'haunted Victorian mansion, moonlight through broken windows, ravens, dark romance',
+  'Post-Apocalyptic': 'overgrown ruins of a city, nature reclaiming buildings, golden hour light, solitude',
+  'Surrealism': 'impossible architecture, melting clocks, Dali inspired dreamscape, vivid colors',
+  'Absurdist Fiction': 'giant rubber duck in a corporate office, surreal humor, bright pop art style',
+  'Military SF': 'massive space fleet in battle, laser fire, war-torn alien planet, epic sci-fi art',
+  'Weird West': 'supernatural wild west, ghostly tumbleweeds, skull-faced gunslinger, dark desert night',
+  'Biopunk': 'organic technology, biomechanical structures, glowing veins, alien laboratory',
+  'Dying Earth': 'ancient ruins under a red giant sun, exhausted magic, crumbling civilization',
+  'Sword & Planet': 'barbarian warrior on alien world, strange creatures, two moons in sky',
+  'New Weird': 'bizarre alien cityscape, non-euclidean architecture, strange flora, otherworldly atmosphere',
+  'Solarpunk': 'green solar-powered city, vertical gardens, crystal towers, optimistic future',
+  'Noir Detective': 'rainy street at night, detective in trenchcoat, neon signs, film noir',
+  'Mythic Fiction': 'ancient mythological creatures, epic battle, gold and marble, classical art style',
+  'Splatterpunk': 'gruesome dark forest, blood-red moon, horror movie poster style',
+  'Atompunk': 'retro-futuristic 1950s city, chrome rockets, atomic age optimism',
+  'Decopunk': 'art deco skyscrapers, geometric patterns, 1930s glamour, gold and black',
+  'Lovecraftian': 'ancient underwater city, forbidden knowledge, sanity-bending cosmic horror',
+  'Space Opera': 'grand space battle, colorful nebula, massive starship, epic scale',
+  'Hard SF': 'realistic space station interior, Earth in background, near-future technology',
+  'Grimdark': 'brutal battlefield, dark armor, ravens and crows, grim atmosphere',
+  'Silkpunk': 'east Asian inspired fantasy, silk and bamboo technology, dragon motifs',
+  'Dungeoncore': 'underground dungeon entrance, glowing crystals, treasure chests, adventure'
+};
 
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">';
-  // Background gradient
-  svg += '<defs>';
-  svg += '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">';
-  svg += '<stop offset="0%" stop-color="' + cols[0] + '"/>';
-  svg += '<stop offset="100%" stop-color="' + cols[1] + '"/>';
-  svg += '</linearGradient>';
-  svg += '<linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">';
-  svg += '<stop offset="0%" stop-color="rgba(255,255,255,0.08)"/>';
-  svg += '<stop offset="50%" stop-color="rgba(255,255,255,0)"/>';
-  svg += '</linearGradient>';
-  svg += '</defs>';
-  // BG
-  svg += '<rect width="400" height="560" fill="url(#bg)"/>';
-  svg += '<rect width="400" height="560" fill="url(#shine)"/>';
-
-  // Grid decoration
-  for (var i = 0; i < 20; i++) {
-    var y = 28 + i * 28;
-    svg += '<line x1="40" y1="' + y + '" x2="360" y2="' + y + '" stroke="rgba(0,204,255,0.06)" stroke-width="0.5"/>';
-  }
-  for (var j = 0; j < 10; j++) {
-    var x = 40 + j * 35;
-    svg += '<line x1="' + x + '" y1="40" x2="' + x + '" y2="520" stroke="rgba(0,204,255,0.06)" stroke-width="0.5"/>';
-  }
-
-  // Corner decorations
-  svg += '<rect x="30" y="30" width="340" height="500" fill="none" stroke="rgba(0,204,255,0.15)" stroke-width="1" rx="2"/>';
-  svg += '<rect x="35" y="35" width="330" height="490" fill="none" stroke="rgba(0,204,255,0.08)" stroke-width="0.5" rx="2"/>';
-
-  // Genre tag
-  var genreText = (genre || 'Fiction').toUpperCase();
-  svg += '<text x="200" y="80" text-anchor="middle" font-family="monospace" font-size="10" letter-spacing="4" fill="rgba(0,204,255,0.5)">' + escSvg(genreText) + '</text>';
-
-  // Decorative line under genre
-  svg += '<line x1="160" y1="90" x2="240" y2="90" stroke="rgba(0,204,255,0.3)" stroke-width="1"/>';
-
-  // Title
-  var titleLines = wrapText(title, 18);
-  var titleY = 200 - (titleLines.length - 1) * 20;
-  titleLines.forEach(function(line, i) {
-    svg += '<text x="200" y="' + (titleY + i * 40) + '" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#e0e0f0" font-weight="bold">' + escSvg(line) + '</text>';
-  });
-
-  // Decorative diamond
-  svg += '<polygon points="200,' + (titleY + titleLines.length * 40 + 20) + ' 210,' + (titleY + titleLines.length * 40 + 30) + ' 200,' + (titleY + titleLines.length * 40 + 40) + ' 190,' + (titleY + titleLines.length * 40 + 30) + '" fill="none" stroke="rgba(0,204,255,0.4)" stroke-width="1"/>';
-
-  // Quote
-  if (quote) {
-    var quoteLines = wrapText(quote, 30);
-    var quoteY = 380;
-    quoteLines.forEach(function(line, i) {
-      svg += '<text x="200" y="' + (quoteY + i * 18) + '" text-anchor="middle" font-family="Georgia, serif" font-size="12" font-style="italic" fill="rgba(200,200,216,0.6)">' + escSvg(line) + '</text>';
-    });
-  }
-
-  // Author
-  svg += '<text x="200" y="500" text-anchor="middle" font-family="monospace" font-size="13" letter-spacing="3" fill="rgba(0,204,255,0.7)">' + escSvg('by ' + (author || 'Anonymous')) + '</text>';
-
-  // Bottom accent
-  svg += '<line x1="160" y1="515" x2="240" y2="515" stroke="rgba(0,204,255,0.3)" stroke-width="1"/>';
-
-  svg += '</svg>';
-  return svg;
+function buildCoverPrompt(title, genre, author) {
+  var base = GENRE_PROMPTS[genre] || GENRE_PROMPTS['default'] || 'abstract atmospheric art, dark moody colors';
+  var prompt = 'book cover art, ' + base + ', no text, no letters, no words, no title, no author name, cinematic composition, professional illustration, 4k detail';
+  return prompt;
 }
 
-function wrapText(text, maxChars) {
-  if (!text) return [''];
-  var words = text.split(' ');
-  var lines = [];
-  var current = '';
-  words.forEach(function(w) {
-    if ((current + ' ' + w).trim().length > maxChars) {
-      if (current) lines.push(current.trim());
-      current = w;
-    } else {
-      current = (current + ' ' + w).trim();
-    }
-  });
-  if (current) lines.push(current.trim());
-  return lines.length ? lines : [''];
-}
+async function generateCoverImage(title, genre, author) {
+  var prompt = buildCoverPrompt(title, genre, author);
+  var encoded = encodeURIComponent(prompt);
+  var url = 'https://image.pollinations.ai/prompt/' + encoded + '?width=400&height=560&nologo=true&seed=' + Math.floor(Math.random() * 999999);
 
-function escSvg(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() { resolve(url); };
+    img.onerror = function() { resolve(null); };
+    img.src = url;
+    // Timeout fallback
+    setTimeout(function() { resolve(null); }, 25000);
+  });
 }
 
 function escHtml(s) {
@@ -538,19 +491,24 @@ function escHtml(s) {
 }
 
 // ── Render preview ──
-function renderPreview() {
+async function renderPreview() {
   var v = bookData.selected;
   var preview = document.getElementById('preview');
 
-  var coverSVG = generateCoverSVG(v.title, v.author, v.quote, v.genre);
-  bookData.coverSVG = coverSVG;
-
+  // Generate AI cover image
   var html = '';
-  html += '<div class="cover-svg">' + coverSVG + '</div>';
+  html += '<div style="text-align:center;margin-bottom:20px;">';
+  html += '<div id="cover-loading" style="width:320px;height:448px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--grey);font-size:12px">Generating cover image...</div>';
+  html += '<img id="cover-img" style="display:none;width:320px;border-radius:4px;border:1px solid var(--border);" crossorigin="anonymous">';
+  html += '</div>';
+
   html += '<div style="text-align:center; margin-bottom:24px;">';
   html += '<h2 style="font-size:20px; color:var(--green); margin-bottom:4px;">' + escHtml(v.title) + '</h2>';
   html += '<div style="font-size:12px; color:var(--grey);">by ' + escHtml(v.author) + '</div>';
   html += '<div style="font-size:11px; color:var(--purple); margin-top:4px;">' + escHtml(v.genre) + '</div>';
+  if (v.quote) {
+    html += '<div style="font-size:11px; color:var(--grey); margin-top:8px; font-style:italic;">"' + escHtml(v.quote) + '"</div>';
+  }
   html += '</div>';
 
   html += '<div style="padding:16px; background:var(--bg); border:1px solid var(--border); border-radius:4px; margin-bottom:20px;">';
@@ -564,18 +522,43 @@ function renderPreview() {
 
   // Download buttons
   html += '<div class="download-bar">';
-  html += '<button class="btn" onclick="downloadSVG()">COVER.SVG</button>';
+  html += '<button class="btn" onclick="downloadCover()">COVER.JPG</button>';
   html += '<button class="btn" onclick="downloadMD()">PAGES.MD</button>';
   html += '<button class="btn" onclick="downloadJSON()">METADATA.JSON</button>';
   html += '<button class="btn primary" onclick="downloadHTML()">FULL HTML</button>';
   html += '</div>';
 
   preview.innerHTML = html;
+
+  // Start AI image generation
+  var coverUrl = await generateCoverImage(v.title, v.genre, v.author);
+  var loadingEl = document.getElementById('cover-loading');
+  var imgEl = document.getElementById('cover-img');
+  if (coverUrl) {
+    bookData.coverImageUrl = coverUrl;
+    imgEl.onload = function() {
+      loadingEl.style.display = 'none';
+      imgEl.style.display = 'block';
+    };
+    imgEl.src = coverUrl;
+  } else {
+    loadingEl.textContent = 'Image generation failed. Try refreshing.';
+  }
 }
 
 // ── Downloads ──
-function downloadSVG() {
-  download('cover.svg', bookData.coverSVG, 'image/svg+xml');
+async function downloadCover() {
+  if (!bookData.coverImageUrl) { alert('Cover not ready yet.'); return; }
+  try {
+    var res = await fetch(bookData.coverImageUrl);
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'cover.jpg';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('Download failed: ' + e.message); }
 }
 
 function downloadMD() {
@@ -600,6 +583,7 @@ function downloadJSON() {
 }
 
 function downloadHTML() {
+  var coverImg = bookData.coverImageUrl ? '<img src="' + bookData.coverImageUrl + '" style="width:100%;max-width:400px;border-radius:4px;">' : '';
   var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escHtml(bookData.selected.title) + '</title>';
   fullHtml += '<style>body{background:#0a0a0f;color:#c8c8d8;font-family:Georgia,serif;max-width:600px;margin:40px auto;padding:20px;line-height:1.8;}';
   fullHtml += 'h1{font-size:24px;color:#00ccff;text-align:center;margin-bottom:4px;}';
@@ -607,7 +591,7 @@ function downloadHTML() {
   fullHtml += '.cover{text-align:center;margin-bottom:30px;}';
   fullHtml += '.annotation{padding:16px;border:1px solid #2a2a3a;border-radius:4px;font-style:italic;margin-bottom:30px;}';
   fullHtml += '.content{white-space:pre-wrap;}</style></head><body>';
-  fullHtml += '<div class="cover">' + bookData.coverSVG + '</div>';
+  fullHtml += '<div class="cover">' + coverImg + '</div>';
   fullHtml += '<h1>' + escHtml(bookData.selected.title) + '</h1>';
   fullHtml += '<div class="author">by ' + escHtml(bookData.selected.author) + '</div>';
   fullHtml += '<div class="annotation">' + escHtml(bookData.annotation) + '</div>';

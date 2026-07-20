@@ -209,7 +209,6 @@
     <a href="../bookforge/">BOOKFORGE</a>
     <a href="../alien/">ALIEN</a>
     <a href="../hobby/" class="active">HOBBY</a>
-    <a href="../cli-log/">CLI-LOG</a>
     <a href="../charforge/">CHARFORGE</a>
   </div>
 
@@ -408,7 +407,17 @@ function renderStory(text) {
   var story = parts.length > 1 ? parts[1] : text;
   var whyTry = parts.length > 2 ? parts[2] : '';
 
-  var html = '<div class="story-section">';
+  var html = '';
+
+  // Hobby illustration
+  if (currentHobby) {
+    html += '<div style="margin-bottom:16px;text-align:center;">';
+    html += '<div id="hobby-img-loading" style="width:100%;height:200px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--grey);font-size:12px">Loading illustration...</div>';
+    html += '<img id="hobby-img" style="display:none;width:100%;max-height:300px;object-fit:cover;border-radius:6px;border:1px solid var(--border);" crossorigin="anonymous">';
+    html += '</div>';
+  }
+
+  html += '<div class="story-section">';
   html += '<h3>A DAY IN THE LIFE</h3>';
   html += '<div class="story-text">' + escHtml(story.trim()) + '</div>';
   html += '</div>';
@@ -421,6 +430,18 @@ function renderStory(text) {
   }
 
   right.innerHTML = html;
+
+  // Load hobby illustration
+  if (currentHobby) {
+    var hLoading = document.getElementById('hobby-img-loading');
+    var hImg = document.getElementById('hobby-img');
+    if (hImg) {
+      hImg.onload = function() { hLoading.style.display = 'none'; hImg.style.display = 'block'; };
+      hImg.onerror = function() { hLoading.textContent = 'Illustration unavailable'; };
+      var hobbyPrompt = 'person practicing ' + currentHobby.name.toLowerCase() + ', ' + currentHobby.category.toLowerCase() + ' hobby, detailed illustration, warm lighting, cozy atmosphere, no text';
+      hImg.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(hobbyPrompt) + '?width=600&height=300&nologo=true&seed=' + Math.floor(Math.random() * 999999);
+    }
+  }
 }
 
 function escHtml(s) {

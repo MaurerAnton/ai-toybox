@@ -242,7 +242,6 @@
     <a href="../bookforge/">BOOKFORGE</a>
     <a href="../alien/">ALIEN</a>
     <a href="../hobby/">HOBBY</a>
-    <a href="../cli-log/">CLI-LOG</a>
     <a href="../charforge/" class="active">CHARFORGE</a>
   </div>
 
@@ -465,6 +464,18 @@ function renderCharacterSheet() {
 
   var html = '<div class="char-sheet">';
 
+  // Character portrait
+  var portraitPrompt = 'fantasy character portrait, ' + (charData._race || 'human') + ' ' + (charData._class || 'warrior') +
+    ', ' + (charData.appearance || 'detailed face, dramatic lighting') +
+    ', RPG character art, digital painting, detailed, no text, no watermark';
+  var portraitUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(portraitPrompt) +
+    '?width=400&height=400&nologo=true&seed=' + Math.floor(Math.random() * 999999);
+
+  html += '<div style="text-align:center;margin-bottom:16px;">';
+  html += '<div id="portrait-loading" style="width:200px;height:200px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--grey);font-size:11px">Generating portrait...</div>';
+  html += '<img id="portrait-img" style="display:none;width:200px;height:200px;border-radius:50%;border:2px solid var(--red);object-fit:cover;" crossorigin="anonymous">';
+  html += '</div>';
+
   // Header
   html += '<div class="char-header">';
   html += '<div class="name">' + escHtml(charData.name || 'Unknown') + '</div>';
@@ -536,6 +547,15 @@ function renderCharacterSheet() {
 
   html += '</div>';
   out.innerHTML = html;
+
+  // Load portrait image
+  var pLoading = document.getElementById('portrait-loading');
+  var pImg = document.getElementById('portrait-img');
+  if (pImg) {
+    pImg.onload = function() { pLoading.style.display = 'none'; pImg.style.display = 'block'; };
+    pImg.onerror = function() { pLoading.textContent = 'Portrait unavailable'; };
+    pImg.src = portraitUrl;
+  }
 }
 
 function escHtml(s) {
