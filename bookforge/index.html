@@ -458,18 +458,27 @@ var GENRE_PROMPTS = {
   'Space Opera': 'grand space battle, colorful nebula, massive starship, epic scale',
   'Hard SF': 'realistic space station interior, Earth in background, near-future technology',
   'Grimdark': 'brutal battlefield, dark armor, ravens and crows, grim atmosphere',
-  'Silkpunk': 'east Asian inspired fantasy, silk and bamboo technology, dragon motifs',
+  'Silkpunk': 'east Asian inspired fantasy, silk and bamboo technology, woven spells, glowing threads',
   'Dungeoncore': 'underground dungeon entrance, glowing crystals, treasure chests, adventure'
 };
 
-function buildCoverPrompt(title, genre, author) {
-  var base = GENRE_PROMPTS[genre] || GENRE_PROMPTS['default'] || 'abstract atmospheric art, dark moody colors';
-  var prompt = 'book cover art, ' + base + ', no text, no letters, no words, no title, no author name, cinematic composition, professional illustration, 4k detail';
-  return prompt;
+function buildCoverPrompt(title, genre, annotation) {
+  var atmosphere = GENRE_PROMPTS[genre] || 'abstract atmospheric art, moody colors';
+  var scene = '';
+  if (annotation) {
+    var cleaned = annotation.replace(/["""]/g, '').replace(/[,;:]+/g, ' ').trim();
+    var words = cleaned.split(/\s+/).slice(0, 25).join(' ');
+    scene = words;
+  }
+  var parts = [];
+  if (scene) parts.push(scene);
+  parts.push(atmosphere);
+  parts.push('book cover illustration, scene only, no physical book object, no characters holding books, no text, no letters, no words, cinematic composition, professional illustration, 4k detail');
+  return parts.join(', ');
 }
 
-async function generateCoverImage(title, genre, author) {
-  var prompt = buildCoverPrompt(title, genre, author);
+async function generateCoverImage(title, genre, author, annotation) {
+  var prompt = buildCoverPrompt(title, genre, annotation);
   var encoded = encodeURIComponent(prompt);
   var url = 'https://image.pollinations.ai/prompt/' + encoded + '?width=400&height=560&nologo=true&seed=' + Math.floor(Math.random() * 999999);
 
@@ -531,7 +540,7 @@ async function renderPreview() {
   preview.innerHTML = html;
 
   // Start AI image generation
-  var coverUrl = await generateCoverImage(v.title, v.genre, v.author);
+  var coverUrl = await generateCoverImage(v.title, v.genre, v.author, bookData.annotation);
   var loadingEl = document.getElementById('cover-loading');
   var imgEl = document.getElementById('cover-img');
   if (coverUrl) {
