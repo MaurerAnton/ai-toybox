@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHARFORGE — RPG Character Builder</title>
+<link rel="stylesheet" href="../core/theme.css">
+<style>
+  body { display: block; }
+  .app { flex-direction: column; min-height: 100vh; }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--red); }
+  .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
+
+  .content {
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-height: calc(100vh - 80px);
+  }
+
+  .left-panel {
+    width: 320px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    padding-left: 24px;
+  }
+
+  .section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--bg2);
+  }
+  .section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .field-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .field-row label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .field-row label span {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--grey);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat-box {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 4px;
+    background: var(--bg);
+  }
+  .stat-box .name {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--grey);
+    margin-bottom: 4px;
+  }
+  .stat-box .val {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--amber);
+  }
+  .stat-box .mod {
+    font-size: 12px;
+    color: var(--blue);
+  }
+  .stat-box input {
+    width: 100%;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--amber);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: bold;
+    padding: 4px;
+    border-radius: 3px;
+  }
+
+  .roll-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  /* Character sheet */
+  .char-sheet {
+    max-width: 600px;
+  }
+  .char-header {
+    text-align: center;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg2);
+    margin-bottom: 16px;
+  }
+  .char-header .name {
+    font-size: 24px;
+    color: var(--red);
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .char-header .meta {
+    font-size: 12px;
+    color: var(--grey);
+  }
+
+  .char-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--bg2);
+    margin-bottom: 12px;
+  }
+  .char-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+  .char-section .text {
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .trait-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .trait-box {
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+  }
+  .trait-box .label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--grey);
+    margin-bottom: 4px;
+  }
+  .trait-box .val {
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .download-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .loading {
+    color: var(--grey);
+    font-style: italic;
+    text-align: center;
+    padding: 40px;
+  }
+
+  @media (max-width: 800px) {
+    .content { flex-direction: column; }
+    .left-panel { width: 100%; }
+    .right-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>CHARFORGE</h1>
+      <div class="sub">RPG CHARACTER BUILDER</div>
+    </div>
+    <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
+  </div>
+
+  <div class="content">
+    <div class="left-panel">
+      <div class="section">
+        <h3>SYSTEM</h3>
+        <select id="system" onchange="onSystemChange()">
+          <option value="dnd5e">D&D 5th Edition</option>
+          <option value="pathfinder">Pathfinder 2e</option>
+          <option value="gurps">GURPS</option>
+        </select>
+      </div>
+
+      <div class="section">
+        <h3>CHARACTER INFO</h3>
+        <div class="field-row">
+          <label><span>NAME</span><input type="text" id="char-name" placeholder="Random"></label>
+        </div>
+        <div class="field-row">
+          <label><span>RACE</span>
+            <select id="char-race"></select>
+          </label>
+          <label><span>CLASS</span>
+            <select id="char-class"></select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label><span>LEVEL</span><input type="number" id="char-level" value="1" min="1" max="20"></label>
+          <label><span>ALIGNMENT</span>
+            <select id="char-alignment">
+              <option>Lawful Good</option><option>Neutral Good</option><option>Chaotic Good</option>
+              <option>Lawful Neutral</option><option>True Neutral</option><option>Chaotic Neutral</option>
+              <option>Lawful Evil</option><option>Neutral Evil</option><option>Chaotic Evil</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn roll-btn" onclick="rollStats()">ROLL STATS (4d6 drop lowest)</button>
+      </div>
+
+      <div class="section">
+        <h3>ABILITY SCORES</h3>
+        <div class="stat-grid" id="stat-grid">
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>DESCRIPTION</h3>
+        <label><span>PERSONALITY TRAIT</span><input type="text" id="personality" placeholder="AI will generate"></label>
+        <label><span>IDEAL</span><input type="text" id="ideal" placeholder="AI will generate"></label>
+        <label><span>BOND</span><input type="text" id="bond" placeholder="AI will generate"></label>
+        <label><span>FLAW</span><input type="text" id="flaw" placeholder="AI will generate"></label>
+      </div>
+
+      <button class="btn primary" style="width:100%" onclick="generateCharacter()">GENERATE CHARACTER (AI)</button>
+      <button class="btn" style="width:100%" onclick="randomizeAll()">RANDOMIZE ALL</button>
+    </div>
+
+    <div class="right-panel">
+      <div id="char-output">
+        <div class="loading" id="placeholder">Configure your character and click GENERATE...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../core/ai-core.js"></script>
+<script src="../core/config.js"></script>
+<script>
+var SYSTEMS = {
+  dnd5e: {
+    races: ['Human', 'Elf', 'Dwarf', 'Halfling', 'Half-Orc', 'Tiefling', 'Dragonborn', 'Gnome', 'Half-Elf', 'Aasimar'],
+    classes: ['Fighter', 'Wizard', 'Rogue', 'Cleric', 'Ranger', 'Paladin', 'Bard', 'Druid', 'Monk', 'Warlock', 'Sorcerer', 'Barbarian'],
+    statNames: ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+  },
+  pathfinder: {
+    races: ['Human', 'Elf', 'Dwarf', 'Halfling', 'Gnome', 'Orc', 'Leshy', 'Lizardfolk', 'Goblin', 'Changeling'],
+    classes: ['Alchemist', 'Barbarian', 'Bard', 'Champion', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Ranger', 'Rogue', 'Sorcerer', 'Wizard'],
+    statNames: ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+  },
+  gurps: {
+    races: ['Human', 'Human (Minor)',
+      'Dwarf', 'Elf', 'Halfling', 'Orc',
+      'Human (Major)'],
+    classes: ['Warrior', 'Scholar', 'Rogue', 'Mage', 'Healer', 'Noble', 'Artisan', 'Ranger'],
+    statNames: ['STR', 'DEX', 'INT', 'HEALTH', 'WILL', 'PER', 'FP']
+  }
+};
+
+var charData = {};
+
+function onSystemChange() {
+  var sys = SYSTEMS[document.getElementById('system').value];
+  var raceSel = document.getElementById('char-race');
+  var classSel = document.getElementById('char-class');
+  raceSel.innerHTML = '';
+  classSel.innerHTML = '';
+  sys.races.forEach(function(r) { raceSel.innerHTML += '<option>' + r + '</option>'; });
+  sys.classes.forEach(function(c) { classSel.innerHTML += '<option>' + c + '</option>'; });
+  renderStatGrid();
+}
+
+function renderStatGrid() {
+  var sys = SYSTEMS[document.getElementById('system').value];
+  var grid = document.getElementById('stat-grid');
+  grid.innerHTML = '';
+  sys.statNames.forEach(function(name) {
+    var box = document.createElement('div');
+    box.className = 'stat-box';
+    box.innerHTML = '<div class="name">' + name + '</div>' +
+      '<input type="number" id="stat-' + name + '" value="10" min="1" max="30" onchange="updateMod(\'' + name + '\')">' +
+      '<div class="mod" id="mod-' + name + '">+0</div>';
+    grid.appendChild(box);
+  });
+}
+
+function updateMod(name) {
+  var val = parseInt(document.getElementById('stat-' + name).value) || 10;
+  var mod = Math.floor((val - 10) / 2);
+  document.getElementById('mod-' + name).textContent = (mod >= 0 ? '+' : '') + mod;
+}
+
+function roll4d6dropLowest() {
+  var rolls = [1,2,3,4].map(function() { return Math.floor(Math.random() * 6) + 1; });
+  rolls.sort(function(a,b) { return a - b; });
+  return rolls[1] + rolls[2] + rolls[3];
+}
+
+function rollStats() {
+  var sys = SYSTEMS[document.getElementById('system').value];
+  sys.statNames.forEach(function(name) {
+    var val = roll4d6dropLowest();
+    document.getElementById('stat-' + name).value = val;
+    updateMod(name);
+  });
+}
+
+function randomizeAll() {
+  var sys = SYSTEMS[document.getElementById('system').value];
+  document.getElementById('char-name').value = '';
+  document.getElementById('char-race').selectedIndex = Math.floor(Math.random() * sys.races.length);
+  document.getElementById('char-class').selectedIndex = Math.floor(Math.random() * sys.classes.length);
+  document.getElementById('char-level').value = Math.floor(Math.random() * 10) + 1;
+  document.getElementById('char-alignment').selectedIndex = Math.floor(Math.random() * 9);
+  rollStats();
+}
+
+async function generateCharacter() {
+  var sysName = document.getElementById('system').value;
+  var sys = SYSTEMS[sysName];
+  var race = document.getElementById('char-race').value;
+  var cls = document.getElementById('char-class').value;
+  var level = document.getElementById('char-level').value;
+  var alignment = document.getElementById('char-alignment').value;
+  var name = document.getElementById('char-name').value || 'unnamed';
+
+  var stats = {};
+  sys.statNames.forEach(function(s) {
+    stats[s] = parseInt(document.getElementById('stat-' + s).value) || 10;
+  });
+
+  document.getElementById('placeholder').textContent = 'Generating backstory and traits...';
+
+  var systemPrompt = 'You are a creative RPG character generator. Given a character concept, generate a detailed character sheet. Return ONLY valid JSON with these fields:\n' +
+    '{\n' +
+    '  "name": "character name",\n' +
+    '  "backstory": "2-3 paragraph backstory",\n' +
+    '  "personality": "personality trait",\n' +
+    '  "ideal": "driving ideal",\n' +
+    '  "bond": "important bond",\n' +
+    '  "flaw": "character flaw",\n' +
+    '  "appearance": "physical description (2-3 sentences)",\n' +
+    '  "traits": ["trait1", "trait2", "trait3"],\n' +
+    '  "equipment": ["item1", "item2", "item3"]\n' +
+    '}\n' +
+    'No explanation, no markdown, just JSON.';
+
+  var userMsg = 'System: ' + sysName + '\nRace: ' + race + '\nClass: ' + cls + '\nLevel: ' + level + '\nAlignment: ' + alignment + '\nStats: ' + JSON.stringify(stats);
+  if (name !== 'unnamed') userMsg += '\nRequested name: ' + name;
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: userMsg}
+  ];
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(text) {
+      document.getElementById('placeholder').textContent = 'Generating: ' + text.length + ' chars...';
+    },
+    onDone: function(msg) {
+      var raw = msg.content || '';
+      var match = raw.match(/\{[\s\S]*\}/);
+      if (!match) {
+        document.getElementById('placeholder').textContent = 'Failed to parse JSON. Try again.';
+        return;
+      }
+      try {
+        charData = JSON.parse(match[0]);
+        charData._system = sysName;
+        charData._race = race;
+        charData._class = cls;
+        charData._level = level;
+        charData._alignment = alignment;
+        charData._stats = stats;
+        renderCharacterSheet();
+      } catch(e) {
+        document.getElementById('placeholder').textContent = 'JSON error: ' + e.message;
+      }
+    },
+    onError: function(err) {
+      document.getElementById('placeholder').textContent = 'Error: ' + err;
+    }
+  });
+}
+
+function renderCharacterSheet() {
+  var out = document.getElementById('char-output');
+  var sys = SYSTEMS[charData._system];
+
+  var html = '<div class="char-sheet">';
+
+  // Header
+  html += '<div class="char-header">';
+  html += '<div class="name">' + escHtml(charData.name || 'Unknown') + '</div>';
+  html += '<div class="meta">' + escHtml(charData._race) + ' ' + escHtml(charData._class) +
+    ' (Level ' + charData._level + ') — ' + escHtml(charData._alignment) + '</div>';
+  html += '<div class="meta" style="margin-top:4px;color:var(--purple)">' +
+    escHtml(charData._system.toUpperCase()) + '</div>';
+  html += '</div>';
+
+  // Stats
+  html += '<div class="char-section"><h3>ABILITY SCORES</h3>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;">';
+  sys.statNames.forEach(function(s) {
+    var val = charData._stats[s] || 10;
+    var mod = Math.floor((val - 10) / 2);
+    html += '<div style="text-align:center;min-width:50px;">';
+    html += '<div style="font-size:9px;letter-spacing:2px;color:var(--grey)">' + s + '</div>';
+    html += '<div style="font-size:22px;font-weight:bold;color:var(--amber)">' + val + '</div>';
+    html += '<div style="font-size:12px;color:var(--blue)">' + (mod >= 0 ? '+' : '') + mod + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // Appearance
+  if (charData.appearance) {
+    html += '<div class="char-section"><h3>APPEARANCE</h3>';
+    html += '<div class="text">' + escHtml(charData.appearance) + '</div></div>';
+  }
+
+  // Backstory
+  if (charData.backstory) {
+    html += '<div class="char-section"><h3>BACKSTORY</h3>';
+    html += '<div class="text">' + escHtml(charData.backstory) + '</div></div>';
+  }
+
+  // Traits
+  html += '<div class="char-section"><h3>TRAITS</h3>';
+  html += '<div class="trait-grid">';
+  var traitPairs = [
+    ['PERSONALITY', charData.personality],
+    ['IDEAL', charData.ideal],
+    ['BOND', charData.bond],
+    ['FLAW', charData.flaw]
+  ];
+  traitPairs.forEach(function(pair) {
+    html += '<div class="trait-box"><div class="label">' + pair[0] + '</div>';
+    html += '<div class="val">' + escHtml(pair[1] || '---') + '</div></div>';
+  });
+  html += '</div></div>';
+
+  // Traits list
+  if (charData.traits && charData.traits.length) {
+    html += '<div class="char-section"><h3>FEATURES & TRAITS</h3>';
+    html += '<div class="text">' + charData.traits.map(function(t) { return '• ' + escHtml(t); }).join('\n') + '</div></div>';
+  }
+
+  // Equipment
+  if (charData.equipment && charData.equipment.length) {
+    html += '<div class="char-section"><h3>EQUIPMENT</h3>';
+    html += '<div class="text">' + charData.equipment.map(function(e) { return '• ' + escHtml(e); }).join('\n') + '</div></div>';
+  }
+
+  // Downloads
+  html += '<div class="download-bar">';
+  html += '<button class="btn" onclick="downloadJSON()">JSON</button>';
+  html += '<button class="btn" onclick="downloadMD()">MARKDOWN</button>';
+  html += '<button class="btn primary" onclick="downloadHTML()">FULL HTML</button>';
+  html += '</div>';
+
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+function escHtml(s) {
+  var div = document.createElement('div');
+  div.textContent = s || '';
+  return div.innerHTML;
+}
+
+// Downloads
+function downloadJSON() {
+  var json = Object.assign({}, charData);
+  delete json._system;
+  delete json._race;
+  delete json._class;
+  delete json._level;
+  delete json._alignment;
+  delete json._stats;
+  json.system = charData._system;
+  json.race = charData._race;
+  json.class = charData._class;
+  json.level = parseInt(charData._level);
+  json.alignment = charData._alignment;
+  json.ability_scores = charData._stats;
+  download(charData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json', JSON.stringify(json, null, 2), 'application/json');
+}
+
+function downloadMD() {
+  var md = '# ' + charData.name + '\n\n';
+  md += '**' + charData._race + ' ' + charData._class + '** (Level ' + charData._level + ')\n';
+  md += 'Alignment: ' + charData._alignment + '\n\n';
+  md += '## Ability Scores\n\n';
+  var sys = SYSTEMS[charData._system];
+  sys.statNames.forEach(function(s) {
+    md += '- **' + s + '**: ' + charData._stats[s] + '\n';
+  });
+  md += '\n## Backstory\n\n' + (charData.backstory || '') + '\n\n';
+  md += '## Traits\n\n';
+  md += '- **Personality**: ' + (charData.personality || '') + '\n';
+  md += '- **Ideal**: ' + (charData.ideal || '') + '\n';
+  md += '- **Bond**: ' + (charData.bond || '') + '\n';
+  md += '- **Flaw**: ' + (charData.flaw || '') + '\n';
+  if (charData.traits && charData.traits.length) {
+    md += '\n## Features\n\n';
+    charData.traits.forEach(function(t) { md += '- ' + t + '\n'; });
+  }
+  if (charData.equipment && charData.equipment.length) {
+    md += '\n## Equipment\n\n';
+    charData.equipment.forEach(function(e) { md += '- ' + e + '\n'; });
+  }
+  download(charData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.md', md, 'text/markdown');
+}
+
+function downloadHTML() {
+  var el = document.getElementById('char-output');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escHtml(charData.name) + '</title>';
+  html += '<style>body{background:#0a0a0f;color:#c8c8d8;font-family:monospace;max-width:600px;margin:40px auto;padding:20px;}';
+  html += 'h1{color:#ff4444;text-align:center;}h2{color:#ff4444;border-bottom:1px solid #2a2a3a;padding-bottom:4px;}';
+  html += '.stat{display:inline-block;text-align:center;margin:0 12px;}.stat .v{font-size:24px;color:#ffaa00;font-weight:bold;}';
+  html += '.stat .n{font-size:10px;color:#666;letter-spacing:2px;}.trait{margin:8px 0;padding:8px;border:1px solid #2a2a3a;border-radius:4px;}';
+  html += '.trait .l{font-size:9px;color:#666;letter-spacing:2px;}</style></head><body>';
+  html += '<h1>' + escHtml(charData.name) + '</h1>';
+  html += '<p style="text-align:center;color:#666;">' + escHtml(charData._race) + ' ' + escHtml(charData._class) + ' (Level ' + charData._level + ')</p>';
+  html += '<h2>ABILITY SCORES</h2><div style="text-align:center;margin:16px 0;">';
+  var sys = SYSTEMS[charData._system];
+  sys.statNames.forEach(function(s) {
+    html += '<div class="stat"><div class="v">' + charData._stats[s] + '</div><div class="n">' + s + '</div></div>';
+  });
+  html += '</div>';
+  if (charData.appearance) { html += '<h2>APPEARANCE</h2><p>' + escHtml(charData.appearance) + '</p>'; }
+  if (charData.backstory) { html += '<h2>BACKSTORY</h2><p>' + escHtml(charData.backstory).replace(/\n/g, '<br>') + '</p>'; }
+  html += '<h2>TRAITS</h2>';
+  ['personality', 'ideal', 'bond', 'flaw'].forEach(function(t) {
+    html += '<div class="trait"><div class="l">' + t.toUpperCase() + '</div>' + escHtml(charData[t] || '') + '</div>';
+  });
+  if (charData.equipment && charData.equipment.length) {
+    html += '<h2>EQUIPMENT</h2><ul>' + charData.equipment.map(function(e) { return '<li>' + escHtml(e) + '</li>'; }).join('') + '</ul>';
+  }
+  html += '</body></html>';
+  download(charData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.html', html, 'text/html');
+}
+
+function download(filename, content, type) {
+  var blob = new Blob([content], {type: type});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Init
+onSystemChange();
+rollStats();
+</script>
+</body>
+</html>

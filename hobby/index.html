@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOBBY — Rare Hobby Simulator</title>
+<link rel="stylesheet" href="../core/theme.css">
+<style>
+  body { display: block; }
+  .app { flex-direction: column; min-height: 100vh; }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--purple); }
+  .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
+
+  .content {
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-height: calc(100vh - 80px);
+  }
+
+  .left-panel {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    padding-left: 24px;
+  }
+
+  .hobby-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 24px;
+    text-align: center;
+    background: var(--bg2);
+  }
+  .hobby-card .emoji { font-size: 64px; margin-bottom: 16px; }
+  .hobby-card .name {
+    font-size: 22px;
+    color: var(--purple);
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .hobby-card .category {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hobby-card .stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+  }
+  .hobby-card .stat {
+    text-align: center;
+  }
+  .hobby-card .stat-val {
+    font-size: 16px;
+    color: var(--green);
+    font-weight: bold;
+  }
+  .hobby-card .stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--grey);
+    text-transform: uppercase;
+  }
+
+  .story-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    background: var(--bg2);
+  }
+  .story-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--purple);
+    margin-bottom: 12px;
+  }
+  .story-text {
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  .tools-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--bg2);
+    margin-top: 16px;
+  }
+  .tools-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .tools-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tool-tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .try-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--bg2);
+    margin-top: 16px;
+  }
+  .try-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+  .try-text {
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .counter {
+    text-align: center;
+    font-size: 11px;
+    color: var(--grey);
+    padding: 8px;
+  }
+
+  .loading {
+    color: var(--grey);
+    font-style: italic;
+    text-align: center;
+    padding: 40px;
+  }
+
+  @media (max-width: 800px) {
+    .content { flex-direction: column; }
+    .left-panel { width: 100%; }
+    .right-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>HOBBY</h1>
+      <div class="sub">RARE HOBBY SIMULATOR</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
+      <button class="btn primary" onclick="newHobby()">ANOTHER HOBBY</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="left-panel">
+      <div class="hobby-card" id="hobby-card">
+        <div class="emoji" id="hobby-emoji">🎲</div>
+        <div class="name" id="hobby-name">Loading...</div>
+        <div class="category" id="hobby-category">---</div>
+        <div class="stats" id="hobby-stats" style="display:none">
+          <div class="stat">
+            <div class="stat-val" id="stat-cost">--</div>
+            <div class="stat-label">START COST</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="stat-difficulty">--</div>
+            <div class="stat-label">DIFFICULTY</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val" id="stat-social">--</div>
+            <div class="stat-label">SOCIAL</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tools-section" id="tools-section" style="display:none">
+        <h3>TOOLS & GEAR</h3>
+        <div class="tools-list" id="tools-list"></div>
+      </div>
+
+      <div class="counter" id="counter"></div>
+    </div>
+
+    <div class="right-panel" id="right-panel">
+      <div class="loading" id="loading">Click "ANOTHER HOBBY" to discover something new...</div>
+    </div>
+  </div>
+</div>
+
+<script src="../core/ai-core.js"></script>
+<script src="../core/config.js"></script>
+<script>
+var HOBBIES = [
+  {name: 'Cactus Collecting', emoji: '🌵', category: 'Botany'},
+  {name: 'Amateur Radio (Ham Radio)', emoji: '📻', category: 'Electronics'},
+  {name: 'Film Photography', emoji: '📷', category: 'Photography'},
+  {name: 'Ornithology (Bird Watching)', emoji: '🐦', category: 'Nature'},
+  {name: 'Mechanical Keyboard Building', emoji: '⌨️', category: 'Technology'},
+  {name: 'Urban Exploration', emoji: '🏚️', category: 'Adventure'},
+  {name: 'Lockpicking', emoji: '🔒', category: 'Puzzles'},
+  {name: 'Soap Carving', emoji: '🧼', category: 'Craft'},
+  {name: 'Fermentation', emoji: '🫙', category: 'Food & Drink'},
+  {name: 'Whittling', emoji: '🔪', category: 'Woodcraft'},
+  {name: 'Herbarium Pressing', emoji: '🌿', category: 'Botany'},
+  {name: 'Dice Collecting', emoji: '🎲', category: 'Collecting'},
+  {name: 'Model Kit Building', emoji: '🏗️', category: 'Scale Models'},
+  {name: 'Pen Spinning', emoji: '🖊️', category: 'Skill Toy'},
+  {name: 'Fountain Pen Inking', emoji: '🖋️', category: 'Stationery'},
+  {name: 'Coin Roll Hunting', emoji: '🪙', category: 'Numismatics'},
+  {name: 'Bonsai', emoji: '🌳', category: 'Botany'},
+  {name: 'Rock Tumbling', emoji: '🪨', category: 'Geology'},
+  {name: 'Vinyl Record Collecting', emoji: '🎵', category: 'Music'},
+  {name: 'Drone FPV Racing', emoji: '🚁', category: 'Technology'},
+  {name: 'Astrophotography', emoji: '🔭', category: 'Photography'},
+  {name: 'Fly Tying (Fishing)', emoji: '🎣', category: 'Outdoors'},
+  {name: 'Kintsugi', emoji: '✨', category: 'Japanese Craft'},
+  {name: 'Leathercraft', emoji: '👜', category: 'Craft'},
+  {name: 'Blacksmithing', emoji: '⚒️', category: 'Metalwork'},
+  {name: 'Letterboxing', emoji: '📬', category: 'Adventure'},
+  {name: 'Geocaching', emoji: '🗺️', category: 'Adventure'},
+  {name: 'Antiquarian Book Collecting', emoji: '📚', category: 'Collecting'},
+  {name: 'Stained Glass Making', emoji: '🪟', category: 'Art'},
+  {name: 'Beekeeping', emoji: '🐝', category: 'Nature'},
+  {name: 'Woodturning', emoji: '🪵', category: 'Woodcraft'},
+  {name: 'Calligraphy', emoji: '✍️', category: 'Art'},
+  {name: 'Perfume Making', emoji: '🌸', category: 'Chemistry'},
+  {name: 'Vexillology (Flag Study)', emoji: '🚩', category: 'History'},
+  {name: 'Trainspotting', emoji: '🚂', category: 'Transport'},
+  {name: 'Wargaming Miniatures', emoji: '⚔️', category: 'Gaming'},
+  {name: 'Terrarium Building', emoji: '🌿', category: 'Botany'},
+  {name: 'Sourdough Baking', emoji: '🍞', category: 'Food & Drink'},
+  {name: 'Origami', emoji: '🦢', category: 'Paper Craft'},
+  {name: 'Mechanical Puzzles', emoji: '🧩', category: 'Puzzles'},
+  {name: 'Sound Recording (Field Recording)', emoji: '🎙️', category: 'Audio'},
+  {name: 'Rune Casting', emoji: '🪬', category: 'Mysticism'},
+  {name: 'Soap Making', emoji: '🧼', category: 'Craft'},
+  {name: 'Herb Gardening', emoji: '🌱', category: 'Botany'},
+  {name: 'Antique Clock Restoration', emoji: '🕰️', category: 'Restoration'},
+  {name: 'Pyrography (Wood Burning)', emoji: '🔥', category: 'Art'},
+  {name: 'Coin Collecting', emoji: '🪙', category: 'Numismatics'},
+  {name: 'Vintage Typewriter Collecting', emoji: '⌨️', category: 'Collecting'},
+  {name: 'Mushroom Foraging', emoji: '🍄', category: 'Nature'},
+  {name: 'Catapult Building', emoji: '🏗️', category: 'Engineering'},
+  {name: 'Knot Tying', emoji: '🪢', category: 'Outdoors'},
+  {name: 'Pipe Smoking', emoji: '🪈', category: 'Leisure'},
+  {name: 'Mead Making', emoji: '🍯', category: 'Food & Drink'},
+  {name: 'Aquascaping', emoji: '🐠', category: 'Nature'},
+  {name: 'Glass Blowing', emoji: '🫧', category: 'Art'},
+  {name: 'Sword Fighting (HEMA)', emoji: '⚔️', category: 'Martial Arts'},
+  {name: 'Fossil Hunting', emoji: '🦴', category: 'Geology'},
+  {name: 'Night Sky Watching', emoji: '🌌', category: 'Astronomy'},
+  {name: 'Puppetry', emoji: '🎭', category: 'Performance'},
+  {name: 'Map Making (Cartography)', emoji: '🗺️', category: 'Art'},
+  {name: 'Candle Making', emoji: '🕯️', category: 'Craft'},
+  {name: 'Kite Building', emoji: '🪁', category: 'Engineering'},
+  {name: 'Rope Making', emoji: '🪢', category: 'Craft'},
+  {name: 'Stargazing', emoji: '⭐', category: 'Astronomy'},
+  {name: 'Pottery', emoji: '🏺', category: 'Art'},
+  {name: 'Wax Sealing', emoji: '✉️', category: 'Stationery'},
+  {name: 'Tattoo Collecting', emoji: ' Tattoo collecting', category: 'Art'}
+];
+
+var recentHobbies = [];
+var currentHobby = null;
+
+function pickHobby() {
+  var available = HOBBIES.filter(function(h) {
+    return recentHobbies.indexOf(h.name) === -1;
+  });
+  if (available.length === 0) {
+    recentHobbies = [];
+    available = HOBBIES;
+  }
+  var h = available[Math.floor(Math.random() * available.length)];
+  recentHobbies.push(h.name);
+  if (recentHobbies.length > 5) recentHobbies.shift();
+  return h;
+}
+
+async function newHobby() {
+  var hobby = pickHobby();
+  currentHobby = hobby;
+
+  document.getElementById('hobby-emoji').textContent = hobby.emoji;
+  document.getElementById('hobby-name').textContent = hobby.name;
+  document.getElementById('hobby-category').textContent = hobby.category;
+  document.getElementById('hobby-stats').style.display = 'none';
+  document.getElementById('tools-section').style.display = 'none';
+
+  var right = document.getElementById('right-panel');
+  right.innerHTML = '<div class="loading">Generating day in the life of a ' + escHtml(hobby.name) + ' enthusiast...</div>';
+
+  var systemPrompt = 'You are a creative writer describing a day in the life of someone passionate about a rare hobby. Write a vivid, engaging narrative about their day — morning, afternoon, evening. Include: what tools/gear they use, what brings them joy, what frustrates them, specific details that make the hobby real. Be warm, observant, and slightly poetic. Format as:\n\nTOOLS: [comma-separated list of tools/gear]\nDIFFICULTY: [Easy/Medium/Hard]\nSTART_COST: [$/$$/$$$]\nSOCIAL: [Solitary/Small Group/Community]\n\n## A Day in the Life\n\n[The narrative, 300-400 words]\n\n## Why Try It?\n\n[2-3 sentences on why this hobby is worth exploring]';
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: 'Hobby: ' + hobby.name + '\nCategory: ' + hobby.category}
+  ];
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(text) {
+      right.innerHTML = '<div class="loading">Generating: ' + text.length + ' chars...</div>';
+    },
+    onDone: function(msg) {
+      renderStory(msg.content || '');
+      document.getElementById('counter').textContent = 'Hobbies viewed: ' + recentHobbies.length;
+    },
+    onError: function(err) {
+      right.innerHTML = '<div class="loading" style="color:var(--red)">' + err + '</div>';
+    }
+  });
+}
+
+function renderStory(text) {
+  var right = document.getElementById('right-panel');
+
+  // Parse metadata
+  var toolsMatch = text.match(/TOOLS:\s*(.+)/i);
+  var diffMatch = text.match(/DIFFICULTY:\s*(.+)/i);
+  var costMatch = text.match(/START_COST:\s*(.+)/i);
+  var socialMatch = text.match(/SOCIAL:\s*(.+)/i);
+
+  if (toolsMatch) {
+    document.getElementById('tools-section').style.display = 'block';
+    var tools = toolsMatch[1].split(',').map(function(t) { return t.trim(); });
+    var toolsList = document.getElementById('tools-list');
+    toolsList.innerHTML = '';
+    tools.forEach(function(t) {
+      var tag = document.createElement('span');
+      tag.className = 'tool-tag';
+      tag.textContent = t;
+      toolsList.appendChild(tag);
+    });
+  }
+
+  // Stats
+  var stats = document.getElementById('hobby-stats');
+  stats.style.display = 'flex';
+  document.getElementById('stat-cost').textContent = costMatch ? costMatch[1].trim() : '$$';
+  document.getElementById('stat-difficulty').textContent = diffMatch ? diffMatch[1].trim() : 'Medium';
+  document.getElementById('stat-social').textContent = socialMatch ? socialMatch[1].trim() : 'Solitary';
+
+  // Story
+  var parts = text.split(/## (?:Why Try It|A Day in the Life)/i);
+  var story = parts.length > 1 ? parts[1] : text;
+  var whyTry = parts.length > 2 ? parts[2] : '';
+
+  var html = '<div class="story-section">';
+  html += '<h3>A DAY IN THE LIFE</h3>';
+  html += '<div class="story-text">' + escHtml(story.trim()) + '</div>';
+  html += '</div>';
+
+  if (whyTry.trim()) {
+    html += '<div class="try-section">';
+    html += '<h3>WHY TRY IT?</h3>';
+    html += '<div class="try-text">' + escHtml(whyTry.trim()) + '</div>';
+    html += '</div>';
+  }
+
+  right.innerHTML = html;
+}
+
+function escHtml(s) {
+  var div = document.createElement('div');
+  div.textContent = s || '';
+  return div.innerHTML;
+}
+
+// Auto-load first hobby
+newHobby();
+</script>
+</body>
+</html>

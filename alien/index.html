@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALIEN — Explain It to an Alien</title>
+<link rel="stylesheet" href="../core/theme.css">
+<style>
+  body { display: block; }
+  .app { flex-direction: column; min-height: 100vh; }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--green); }
+  .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
+
+  .content {
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-height: calc(100vh - 80px);
+  }
+
+  .left-panel {
+    width: 350px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    padding-left: 24px;
+  }
+
+  .concept-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    background: var(--bg2);
+  }
+  .concept-card .label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .concept-card .concept {
+    font-size: 28px;
+    color: var(--green);
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+  .concept-card .emoji {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .input-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .input-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .input-section textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 12px;
+    border-radius: 4px;
+  }
+  .input-section textarea:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+  .char-count {
+    text-align: right;
+    font-size: 10px;
+    color: var(--grey);
+    margin-top: 4px;
+  }
+
+  .score-display {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    background: var(--bg2);
+  }
+  .score-number {
+    font-size: 64px;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .score-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--grey);
+  }
+  .score-bar {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s, background 0.5s;
+  }
+
+  .alien-response {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    background: var(--bg2);
+  }
+  .alien-response h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--purple);
+    margin-bottom: 12px;
+  }
+  .alien-response .text {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .attempt-log {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .attempt-log h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+  .attempt-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .attempt-entry .num { color: var(--blue); margin-right: 8px; }
+  .attempt-entry .score { font-weight: bold; }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+  .actions .btn { flex: 1; }
+
+  @media (max-width: 800px) {
+    .content { flex-direction: column; }
+    .left-panel { width: 100%; }
+    .right-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>ALIEN</h1>
+      <div class="sub">EXPLAIN IT TO AN ALIEN</div>
+    </div>
+    <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
+  </div>
+
+  <div class="content">
+    <div class="left-panel">
+      <div class="concept-card" id="concept-card">
+        <div class="label">YOUR CONCEPT</div>
+        <div class="emoji" id="concept-emoji">👽</div>
+        <div class="concept" id="concept-text">---</div>
+        <button class="btn" onclick="newConcept()">NEW CONCEPT</button>
+      </div>
+
+      <div class="input-section">
+        <h3>EXPLAIN IT (3-5 sentences)</h3>
+        <textarea id="explanation" placeholder="Type your explanation of this concept for an alien who knows nothing about Earth..."></textarea>
+        <div class="char-count"><span id="char-count">0</span>/500</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" onclick="newConcept()">SKIP</button>
+        <button class="btn primary" onclick="submitExplanation()">SUBMIT</button>
+      </div>
+
+      <div class="score-display" id="score-display" style="display:none">
+        <div class="score-number" id="score-number">--</div>
+        <div class="score-label">ALIEN UNDERSTANDING</div>
+        <div class="score-bar">
+          <div class="score-fill" id="score-fill" style="width:0"></div>
+        </div>
+      </div>
+
+      <div class="attempt-log" id="attempt-log" style="display:none">
+        <h3>ATTEMPTS</h3>
+        <div id="attempts-list"></div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="alien-response" id="alien-response" style="display:none">
+        <h3>👽 ALIEN SAYS</h3>
+        <div class="text" id="alien-text"></div>
+      </div>
+
+      <div id="chat-log" class="terminal" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../core/ai-core.js"></script>
+<script src="../core/config.js"></script>
+<script>
+var CONCEPTS = [
+  {word: 'fork', emoji: '🍴'}, {word: 'rain', emoji: '🌧️'}, {word: 'subscription', emoji: '💳'},
+  {word: 'Wi-Fi', emoji: '📶'}, {word: 'clock', emoji: '🕐'}, {word: 'mirror', emoji: '🪞'},
+  {word: 'bookmark', emoji: '🔖'}, {word: 'password', emoji: '🔑'}, {word: 'pizza', emoji: '🍕'},
+  {word: 'calendar', emoji: '📅'}, {word: 'sunglasses', emoji: '🕶️'}, {word: 'doorbell', emoji: '🔔'},
+  {word: 'umbrella', emoji: '☂️'}, {word: 'alarm clock', emoji: '⏰'}, {word: 'headphones', emoji: '🎧'},
+  {word: 'elevator', emoji: '🛗'}, {word: 'shopping cart', emoji: '🛒'}, {word: 'keyboard', emoji: '⌨️'},
+  {word: 'wallet', emoji: '👛'}, {word: 'passport', emoji: '📘'}, {word: 'traffic light', emoji: '🚦'},
+  {word: 'toothbrush', emoji: '🪥'}, {word: 'pillow', emoji: '🛏️'}, {word: 'wallet', emoji: '💳'},
+  {word: 'thermometer', emoji: '🌡️'}, {word: 'luggage', emoji: '🧳'}, {word: 'soap', emoji: '🧼'},
+  {word: 'passport', emoji: '🛂'}, {word: 'receipt', emoji: '🧾'}, {word: 'pencil', emoji: '✏️'},
+  {word: 'blanket', emoji: '🧣'}, {word: 'battery', emoji: '🔋'}, {word: 'zipper', emoji: '🤐'},
+  {word: 'sponge', emoji: '🧽'}, {word: 'coin', emoji: '🪙'}, {word: 'telescope', emoji: '🔭'},
+  {word: 'microscope', emoji: '🔬'}, {word: 'thermostat', emoji: '🌡️'}, {word: 'remote control', emoji: '📺'},
+  {word: 'light switch', emoji: '💡'}, {word: 'washing machine', emoji: '🫧'}, {word: 'solar panel', emoji: '☀️'},
+  {word: 'bicycle', emoji: '🚲'}, {word: 'anchor', emoji: '⚓'}, {word: 'compass', emoji: '🧭'},
+  {word: 'ladder', emoji: '🪜'}, {word: 'hammer', emoji: '🔨'}, {word: 'key', emoji: '🔑'},
+  {word: 'lock', emoji: '🔒'}, {word: 'glasses', emoji: '👓'}, {word: 'scissors', emoji: '✂️'},
+  {word: 'needle', emoji: '🪡'}, {word: 'coin toss', emoji: '🪙'}, {word: 'shadow', emoji: '👤'},
+  {word: 'echo', emoji: '🔊'}, {word: 'dream', emoji: '💭'}, {word: 'déjà vu', emoji: '🔄'},
+  {word: ' déjà vu', emoji: '🌀'}, {word: 'irony', emoji: '🎭'}, {word: 'boredom', emoji: '🥱'},
+  {word: 'nostalgia', emoji: '📼'}, {word: 'awkward silence', emoji: '🫣'}, {word: 'small talk', emoji: '💬'},
+  {word: 'procrastination', emoji: '⏰'}, {word: 'deadline', emoji: '📅'}, {word: 'alarm clock', emoji: '⏰'},
+  {word: 'Monday', emoji: '😩'}, {word: 'weekend', emoji: '🎉'}, {word: 'vacation', emoji: '🏖️'},
+  {word: 'taxi', emoji: '🚕'}, {word: 'library', emoji: '📚'}, {word: 'supermarket', emoji: '🛒'},
+  {word: 'coffee', emoji: '☕'}, {word: 'tea', emoji: '🍵'}, {word: 'tap water', emoji: '🚰'},
+  {word: 'hot shower', emoji: '🚿'}, {word: 'blanket burrito', emoji: '🫔'}, {word: 'yawn', emoji: '🥱'},
+  {word: 'sneeze', emoji: '🤧'}, {word: 'hiccups', emoji: '😮'}, {word: 'sunburn', emoji: '🌞'},
+  {word: 'gravity', emoji: '🍎'}, {word: 'magnetism', emoji: '🧲'}, {word: 'electricity', emoji: '⚡'},
+  {word: 'oxygen', emoji: '💨'}, {word: 'photosynthesis', emoji: '🌱'}, {word: 'DNA', emoji: '🧬'},
+  {word: 'virus', emoji: '🦠'}, {word: 'vaccine', emoji: '💉'}, {word: 'antibiotics', emoji: '💊'},
+  {word: 'sunset', emoji: '🌅'}, {word: 'rainbow', emoji: '🌈'}, {word: 'thunder', emoji: '⛈️'},
+  {word: 'snowflake', emoji: '❄️'}, {word: 'tide', emoji: '🌊'}, {word: 'season', emoji: '🍂'},
+  {word: 'timezone', emoji: '🌍'}, {word: 'longitude', emoji: '🗺️'}, {word: 'compass', emoji: '🧭'},
+  {word: 'horizon', emoji: '🌅'}, {word: 'constellation', emoji: '⭐'}, {word: 'eclipse', emoji: '🌑'},
+  {word: 'rain check', emoji: '🎟️'}, {word: 'cold feet', emoji: '🦶'}, {word: 'piece of cake', emoji: '🍰'},
+  {word: 'break a leg', emoji: '🦵'}, {word: 'barking up wrong tree', emoji: '🐕'}, {word: 'cat out of bag', emoji: '🐱'},
+  {word: 'raining cats and dogs', emoji: '🐾'}, {word: 'once in a blue moon', emoji: '🌙'}, {word: 'hit the hay', emoji: '🛏️'}
+];
+
+var currentConcept = null;
+var attempts = [];
+var isGenerating = false;
+
+function newConcept() {
+  var usedWords = attempts.map(function(a) { return a.concept; });
+  var available = CONCEPTS.filter(function(c) { return usedWords.indexOf(c.word) === -1; });
+  if (available.length === 0) {
+    document.getElementById('concept-text').textContent = 'ALL CONCEPTS USED!';
+    return;
+  }
+  var pick = available[Math.floor(Math.random() * available.length)];
+  currentConcept = pick;
+  document.getElementById('concept-text').textContent = pick.word;
+  document.getElementById('concept-emoji').textContent = pick.emoji;
+  document.getElementById('explanation').value = '';
+  document.getElementById('char-count').textContent = '0';
+  document.getElementById('explanation').focus();
+}
+
+document.getElementById('explanation').addEventListener('input', function() {
+  var len = this.value.length;
+  document.getElementById('char-count').textContent = len;
+  if (len > 500) {
+    this.value = this.value.substring(0, 500);
+    document.getElementById('char-count').textContent = '500';
+  }
+});
+
+async function submitExplanation() {
+  if (isGenerating) return;
+  var text = document.getElementById('explanation').value.trim();
+  if (!text) return;
+  if (!currentConcept) { newConcept(); return; }
+
+  isGenerating = true;
+  var attemptNum = attempts.length + 1;
+
+  document.getElementById('score-display').style.display = 'block';
+  document.getElementById('score-number').textContent = '...';
+  document.getElementById('score-number').style.color = 'var(--grey)';
+  document.getElementById('score-fill').style.width = '0';
+  document.getElementById('score-fill').style.background = 'var(--grey)';
+
+  var systemPrompt = 'You are an alien from the Andromeda galaxy. You know NOTHING about Earth, human culture, biology, technology, or language. You are trying to understand human concepts. The user is explaining a concept to you. Score their explanation from 0-100 based on how well you understand it. Be specific about what confused you and what questions remain. Be funny and curious. Format:\n\nSCORE: [number]\n\n[Your response as the alien - questions, confusion, partial understanding, humor]';
+
+  var history = attempts.map(function(a, i) {
+    return 'Attempt ' + (i+1) + ' (' + a.concept + '): "' + a.text + '" → Score: ' + a.score;
+  }).join('\n');
+
+  var userMsg = 'Concept: ' + currentConcept.word + '\n\nMy explanation: ' + text;
+  if (history) userMsg += '\n\nPrevious attempts:\n' + history;
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: userMsg}
+  ];
+
+  document.getElementById('alien-response').style.display = 'block';
+  document.getElementById('alien-text').textContent = '';
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(chunk) {
+      document.getElementById('alien-text').textContent += chunk;
+    },
+    onDone: function(msg) {
+      var full = msg.content || '';
+      var scoreMatch = full.match(/SCORE:\s*(\d+)/i);
+      var score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+      score = Math.min(100, Math.max(0, score));
+
+      attempts.push({concept: currentConcept.word, text: text, score: score});
+      renderAttempts(score);
+      updateScoreDisplay(score);
+
+      document.getElementById('explanation').value = '';
+      document.getElementById('char-count').textContent = '0';
+      isGenerating = false;
+    },
+    onError: function(err) {
+      document.getElementById('alien-text').textContent = 'Error: ' + err;
+      isGenerating = false;
+    }
+  });
+}
+
+function updateScoreDisplay(score) {
+  var num = document.getElementById('score-number');
+  var fill = document.getElementById('score-fill');
+  num.textContent = score + '/100';
+  fill.style.width = score + '%';
+
+  if (score >= 80) {
+    num.style.color = 'var(--green)';
+    fill.style.background = 'var(--green)';
+  } else if (score >= 50) {
+    num.style.color = 'var(--amber)';
+    fill.style.background = 'var(--amber)';
+  } else {
+    num.style.color = 'var(--red)';
+    fill.style.background = 'var(--red)';
+  }
+}
+
+function renderAttempts(latestScore) {
+  var log = document.getElementById('attempt-log');
+  var list = document.getElementById('attempts-list');
+  log.style.display = 'block';
+  list.innerHTML = '';
+
+  attempts.forEach(function(a, i) {
+    var entry = document.createElement('div');
+    entry.className = 'attempt-entry';
+    var scoreColor = a.score >= 80 ? 'var(--green)' : a.score >= 50 ? 'var(--amber)' : 'var(--red)';
+    entry.innerHTML = '<span><span class="num">#' + (i+1) + '</span>' + escHtml(a.concept) + '</span>' +
+      '<span class="score" style="color:' + scoreColor + '">' + a.score + '</span>';
+    list.appendChild(entry);
+  });
+}
+
+function escHtml(s) {
+  var div = document.createElement('div');
+  div.textContent = s || '';
+  return div.innerHTML;
+}
+
+// Init
+newConcept();
+</script>
+</body>
+</html>

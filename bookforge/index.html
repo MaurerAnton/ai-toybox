@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOOKFORGE — Nonexistent Book Generator</title>
+<link rel="stylesheet" href="../core/theme.css">
+<style>
+  body { display: block; }
+  .app { flex-direction: column; min-height: 100vh; }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 16px; letter-spacing: 4px; color: var(--blue); }
+  .header .sub { font-size: 10px; color: var(--grey); letter-spacing: 2px; }
+
+  .content {
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-height: calc(100vh - 120px);
+  }
+
+  .left-panel {
+    width: 400px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    padding-left: 24px;
+  }
+
+  .section {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+  }
+  .section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--blue);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .genre-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .genre-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 4px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .genre-btn:hover, .genre-btn.active {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: rgba(0,204,255,0.08);
+  }
+
+  .variant-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .variant-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .variant-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .variant-btn .title { font-size: 14px; color: var(--green); margin-bottom: 2px; }
+  .variant-btn .author { font-size: 11px; color: var(--grey); }
+  .variant-btn .genre { font-size: 10px; color: var(--purple); }
+
+  /* Preview */
+  .book-preview {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .cover-svg {
+    width: 100%;
+    max-width: 320px;
+    display: block;
+    margin: 0 auto 20px;
+    border: 1px solid var(--border);
+  }
+  .book-text {
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+  .book-text h2 {
+    font-size: 18px;
+    color: var(--blue);
+    margin: 20px 0 8px;
+  }
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+  }
+  .toc-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--grey);
+  }
+  .toc-list li span.num { color: var(--blue); margin-right: 8px; }
+
+  .download-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .steps-indicator {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .step-dot {
+    width: 24px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--blue); }
+  .step-dot.done { background: var(--green); }
+
+  .loading {
+    color: var(--grey);
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+  }
+
+  @media (max-width: 800px) {
+    .content { flex-direction: column; }
+    .left-panel { width: 100%; }
+    .right-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>BOOKFORGE</h1>
+      <div class="sub">NONEXISTENT BOOK GENERATOR</div>
+    </div>
+    <button class="btn" onclick="CONFIG.createPanel()">CONFIG</button>
+  </div>
+
+  <div class="content">
+    <div class="left-panel">
+      <div class="section">
+        <h3>STEP 1 — GENRE</h3>
+        <div class="steps-indicator" id="steps">
+          <div class="step-dot active" id="step1"></div>
+          <div class="step-dot" id="step2"></div>
+          <div class="step-dot" id="step3"></div>
+          <div class="step-dot" id="step4"></div>
+        </div>
+        <div class="genre-grid" id="genre-grid"></div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <input type="text" id="custom-genre" placeholder="or type genre/theme/mood..." style="flex:1">
+          <button class="btn" onclick="randomGenre()">RANDOM</button>
+        </div>
+        <button class="btn primary" style="width:100%; margin-top:8px" onclick="generateVariants()">GENERATE BOOK</button>
+      </div>
+
+      <div class="section" id="variants-section" style="display:none">
+        <h3>STEP 2 — PICK A BOOK</h3>
+        <div class="variant-picker" id="variant-picker"></div>
+      </div>
+
+      <div class="section" id="annotation-section" style="display:none">
+        <h3>ANNOTATION</h3>
+        <div id="annotation-text" style="font-size:13px; line-height:1.6; color:var(--text)"></div>
+      </div>
+
+      <div class="section" id="content-section" style="display:none">
+        <h3>STEP 3 — CONTENT</h3>
+        <div id="content-text" class="book-text"></div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div id="preview" class="book-preview">
+        <div class="loading" id="preview-placeholder">
+          Your book will appear here once generated.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../core/ai-core.js"></script>
+<script src="../core/config.js"></script>
+<script>
+var GENRES = [
+  'Dark Fantasy', 'Sci-Fi Noir', 'Magical Realism', 'Cosmic Horror',
+  'Steampunk', 'Cyberpunk', 'Gothic Romance', 'Post-Apocalyptic',
+  'Surrealism', 'Absurdist Fiction', 'Military SF', 'Weird West',
+  'Biopunk', 'Dying Earth', 'Sword & Planet', 'New Weird',
+  'Solarpunk', 'Noir Detective', 'Mythic Fiction', 'Splatterpunk',
+  'Atompunk', 'Decopunk', 'Lovecraftian', 'Space Opera',
+  'Hard SF', 'Grimdark', 'Silkpunk', 'Dungeoncore'
+];
+
+var bookData = {};
+
+// ── Genre buttons ──
+var genreGrid = document.getElementById('genre-grid');
+GENRES.forEach(function(g) {
+  var btn = document.createElement('button');
+  btn.className = 'genre-btn';
+  btn.textContent = g;
+  btn.onclick = function() { selectGenre(g); };
+  genreGrid.appendChild(btn);
+});
+
+function selectGenre(g) {
+  document.querySelectorAll('.genre-btn').forEach(function(b) { b.classList.remove('active'); });
+  var btns = document.querySelectorAll('.genre-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].textContent === g) { btns[i].classList.add('active'); break; }
+  }
+  document.getElementById('custom-genre').value = g;
+}
+
+function randomGenre() {
+  var g = GENRES[Math.floor(Math.random() * GENRES.length)];
+  selectGenre(g);
+}
+
+function getGenre() {
+  return document.getElementById('custom-genre').value.trim() || GENRES[Math.floor(Math.random() * GENRES.length)];
+}
+
+function setStep(n) {
+  for (var i = 1; i <= 4; i++) {
+    var dot = document.getElementById('step' + i);
+    if (i < n) { dot.className = 'step-dot done'; }
+    else if (i === n) { dot.className = 'step-dot active'; }
+    else { dot.className = 'step-dot'; }
+  }
+}
+
+// ── Generate 3 title/author/genre variants ──
+async function generateVariants() {
+  var genre = getGenre();
+  var section = document.getElementById('variants-section');
+  section.style.display = 'block';
+  document.getElementById('variant-picker').innerHTML = '<div class="loading">Generating book concepts...</div>';
+  setStep(2);
+
+  var systemPrompt = 'You are a creative book metadata generator. Generate 3 distinct book concepts for the given genre. Return ONLY valid JSON array with 3 objects, each having: "title", "author" (fictional), "genre" (subgenre), "quote" (one-line quote for the cover, max 10 words). No explanation, no markdown.';
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: 'Genre: ' + genre + '\nGenerate 3 book concepts as JSON array.'}
+  ];
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(text) {
+      document.getElementById('variant-picker').innerHTML = '<div class="loading">' + text.substring(0, 200) + '</div>';
+    },
+    onDone: function(msg) {
+      var raw = msg.content || '';
+      // Extract JSON
+      var match = raw.match(/\[[\s\S]*\]/);
+      if (!match) {
+        document.getElementById('variant-picker').innerHTML = '<div class="loading" style="color:var(--red)">Failed to parse. <button class="btn" onclick="generateVariants()">Retry</button></div>';
+        return;
+      }
+      try {
+        var variants = JSON.parse(match[0]);
+        bookData.variants = variants;
+        renderVariants(variants);
+      } catch(e) {
+        document.getElementById('variant-picker').innerHTML = '<div class="loading" style="color:var(--red)">JSON error. <button class="btn" onclick="generateVariants()">Retry</button></div>';
+      }
+    },
+    onError: function(err) {
+      document.getElementById('variant-picker').innerHTML = '<div class="loading" style="color:var(--red)">' + err + '</div>';
+    }
+  });
+}
+
+function renderVariants(variants) {
+  var picker = document.getElementById('variant-picker');
+  picker.innerHTML = '';
+  variants.forEach(function(v, i) {
+    var btn = document.createElement('button');
+    btn.className = 'variant-btn';
+    btn.innerHTML = '<div class="title">' + escHtml(v.title) + '</div>' +
+      '<div class="author">by ' + escHtml(v.author) + '</div>' +
+      '<div class="genre">' + escHtml(v.genre) + '</div>';
+    btn.onclick = function() { pickVariant(i); };
+    picker.appendChild(btn);
+  });
+}
+
+async function pickVariant(idx) {
+  var v = bookData.variants[idx];
+  bookData.selected = v;
+  document.getElementById('annotation-section').style.display = 'block';
+  document.getElementById('annotation-text').textContent = 'Generating annotation...';
+  setStep(3);
+
+  var systemPrompt = 'You are a book annotator. Write a compelling 100-200 word annotation for this book. The annotation should intrigue readers, hint at the plot without spoilers, and match the tone of the genre. Return ONLY the annotation text, no headers, no formatting.';
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: 'Title: ' + v.title + '\nAuthor: ' + v.author + '\nGenre: ' + v.genre + '\nCover quote: ' + v.quote}
+  ];
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(text) {
+      document.getElementById('annotation-text').textContent = text;
+    },
+    onDone: function(msg) {
+      bookData.annotation = msg.content || '';
+      generateTOCAndContent();
+    },
+    onError: function(err) {
+      document.getElementById('annotation-text').innerHTML = '<span style="color:var(--red)">' + err + '</span>';
+    }
+  });
+}
+
+async function generateTOCAndContent() {
+  document.getElementById('content-section').style.display = 'block';
+  document.getElementById('content-text').innerHTML = '<div class="loading">Generating table of contents and first pages...</div>';
+
+  var v = bookData.selected;
+  var systemPrompt = 'You are a creative writer. Generate a table of contents (8-12 chapters) and the full text of chapters 1 and 2 for this book. Format as markdown. Each chapter should be 300-500 words. Return in this exact format:\n\n# Table of Contents\n1. Chapter Title\n2. Chapter Title\n...\n\n# Chapter 1: [Title]\n[full text]\n\n# Chapter 2: [Title]\n[full text]';
+
+  var msgs = [
+    {role:'system', content: systemPrompt},
+    {role:'user', content: 'Title: ' + v.title + '\nAuthor: ' + v.author + '\nGenre: ' + v.genre + '\nAnnotation: ' + bookData.annotation}
+  ];
+
+  await AI.streamChat(msgs, [], {
+    onContent: function(text) {
+      document.getElementById('content-text').innerHTML = '<div class="loading">Generating: ' + text.length + ' chars...</div>';
+    },
+    onDone: function(msg) {
+      bookData.content = msg.content || '';
+      bookData.pages = splitPages(bookData.content);
+      renderPreview();
+      setStep(4);
+    },
+    onError: function(err) {
+      document.getElementById('content-text').innerHTML = '<div class="loading" style="color:var(--red)">' + err + '</div>';
+    }
+  });
+}
+
+function splitPages(text) {
+  // Split into chapters
+  var chapters = text.split(/(?=# Chapter \d)/);
+  return chapters.map(function(c) { return c.trim(); }).filter(function(c) { return c.length > 0; });
+}
+
+// ── SVG Cover Generator ──
+function generateCoverSVG(title, author, quote, genre) {
+  // Pick gradient based on genre mood
+  var gradients = {
+    'Dark Fantasy': ['#1a0a2e', '#3d1a78'],
+    'Sci-Fi Noir': ['#0a0a1a', '#1a2a4a'],
+    'Cyberpunk': ['#0a0a1a', '#1a0a2e'],
+    'Steampunk': ['#1a1208', '#3d2a0a'],
+    'Cosmic Horror': ['#0a0a0a', '#1a0a1a'],
+    'default': ['#0a0a1a', '#1a1a3a']
+  };
+  var cols = gradients[genre] || gradients['default'];
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">';
+  // Background gradient
+  svg += '<defs>';
+  svg += '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">';
+  svg += '<stop offset="0%" stop-color="' + cols[0] + '"/>';
+  svg += '<stop offset="100%" stop-color="' + cols[1] + '"/>';
+  svg += '</linearGradient>';
+  svg += '<linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">';
+  svg += '<stop offset="0%" stop-color="rgba(255,255,255,0.08)"/>';
+  svg += '<stop offset="50%" stop-color="rgba(255,255,255,0)"/>';
+  svg += '</linearGradient>';
+  svg += '</defs>';
+  // BG
+  svg += '<rect width="400" height="560" fill="url(#bg)"/>';
+  svg += '<rect width="400" height="560" fill="url(#shine)"/>';
+
+  // Grid decoration
+  for (var i = 0; i < 20; i++) {
+    var y = 28 + i * 28;
+    svg += '<line x1="40" y1="' + y + '" x2="360" y2="' + y + '" stroke="rgba(0,204,255,0.06)" stroke-width="0.5"/>';
+  }
+  for (var j = 0; j < 10; j++) {
+    var x = 40 + j * 35;
+    svg += '<line x1="' + x + '" y1="40" x2="' + x + '" y2="520" stroke="rgba(0,204,255,0.06)" stroke-width="0.5"/>';
+  }
+
+  // Corner decorations
+  svg += '<rect x="30" y="30" width="340" height="500" fill="none" stroke="rgba(0,204,255,0.15)" stroke-width="1" rx="2"/>';
+  svg += '<rect x="35" y="35" width="330" height="490" fill="none" stroke="rgba(0,204,255,0.08)" stroke-width="0.5" rx="2"/>';
+
+  // Genre tag
+  var genreText = (genre || 'Fiction').toUpperCase();
+  svg += '<text x="200" y="80" text-anchor="middle" font-family="monospace" font-size="10" letter-spacing="4" fill="rgba(0,204,255,0.5)">' + escSvg(genreText) + '</text>';
+
+  // Decorative line under genre
+  svg += '<line x1="160" y1="90" x2="240" y2="90" stroke="rgba(0,204,255,0.3)" stroke-width="1"/>';
+
+  // Title
+  var titleLines = wrapText(title, 18);
+  var titleY = 200 - (titleLines.length - 1) * 20;
+  titleLines.forEach(function(line, i) {
+    svg += '<text x="200" y="' + (titleY + i * 40) + '" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#e0e0f0" font-weight="bold">' + escSvg(line) + '</text>';
+  });
+
+  // Decorative diamond
+  svg += '<polygon points="200,' + (titleY + titleLines.length * 40 + 20) + ' 210,' + (titleY + titleLines.length * 40 + 30) + ' 200,' + (titleY + titleLines.length * 40 + 40) + ' 190,' + (titleY + titleLines.length * 40 + 30) + '" fill="none" stroke="rgba(0,204,255,0.4)" stroke-width="1"/>';
+
+  // Quote
+  if (quote) {
+    var quoteLines = wrapText(quote, 30);
+    var quoteY = 380;
+    quoteLines.forEach(function(line, i) {
+      svg += '<text x="200" y="' + (quoteY + i * 18) + '" text-anchor="middle" font-family="Georgia, serif" font-size="12" font-style="italic" fill="rgba(200,200,216,0.6)">' + escSvg(line) + '</text>';
+    });
+  }
+
+  // Author
+  svg += '<text x="200" y="500" text-anchor="middle" font-family="monospace" font-size="13" letter-spacing="3" fill="rgba(0,204,255,0.7)">' + escSvg('by ' + (author || 'Anonymous')) + '</text>';
+
+  // Bottom accent
+  svg += '<line x1="160" y1="515" x2="240" y2="515" stroke="rgba(0,204,255,0.3)" stroke-width="1"/>';
+
+  svg += '</svg>';
+  return svg;
+}
+
+function wrapText(text, maxChars) {
+  if (!text) return [''];
+  var words = text.split(' ');
+  var lines = [];
+  var current = '';
+  words.forEach(function(w) {
+    if ((current + ' ' + w).trim().length > maxChars) {
+      if (current) lines.push(current.trim());
+      current = w;
+    } else {
+      current = (current + ' ' + w).trim();
+    }
+  });
+  if (current) lines.push(current.trim());
+  return lines.length ? lines : [''];
+}
+
+function escSvg(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escHtml(s) {
+  var div = document.createElement('div');
+  div.textContent = s || '';
+  return div.innerHTML;
+}
+
+// ── Render preview ──
+function renderPreview() {
+  var v = bookData.selected;
+  var preview = document.getElementById('preview');
+
+  var coverSVG = generateCoverSVG(v.title, v.author, v.quote, v.genre);
+  bookData.coverSVG = coverSVG;
+
+  var html = '';
+  html += '<div class="cover-svg">' + coverSVG + '</div>';
+  html += '<div style="text-align:center; margin-bottom:24px;">';
+  html += '<h2 style="font-size:20px; color:var(--green); margin-bottom:4px;">' + escHtml(v.title) + '</h2>';
+  html += '<div style="font-size:12px; color:var(--grey);">by ' + escHtml(v.author) + '</div>';
+  html += '<div style="font-size:11px; color:var(--purple); margin-top:4px;">' + escHtml(v.genre) + '</div>';
+  html += '</div>';
+
+  html += '<div style="padding:16px; background:var(--bg); border:1px solid var(--border); border-radius:4px; margin-bottom:20px;">';
+  html += '<div style="font-size:10px; letter-spacing:2px; color:var(--grey); margin-bottom:8px;">ANNOTATION</div>';
+  html += '<div style="font-size:13px; line-height:1.7; font-style:italic;">' + escHtml(bookData.annotation) + '</div>';
+  html += '</div>';
+
+  html += '<div class="book-text">';
+  html += bookData.content.replace(/\n/g, '<br>');
+  html += '</div>';
+
+  // Download buttons
+  html += '<div class="download-bar">';
+  html += '<button class="btn" onclick="downloadSVG()">COVER.SVG</button>';
+  html += '<button class="btn" onclick="downloadMD()">PAGES.MD</button>';
+  html += '<button class="btn" onclick="downloadJSON()">METADATA.JSON</button>';
+  html += '<button class="btn primary" onclick="downloadHTML()">FULL HTML</button>';
+  html += '</div>';
+
+  preview.innerHTML = html;
+}
+
+// ── Downloads ──
+function downloadSVG() {
+  download('cover.svg', bookData.coverSVG, 'image/svg+xml');
+}
+
+function downloadMD() {
+  var md = '# ' + bookData.selected.title + '\n\n';
+  md += '*by ' + bookData.selected.author + '*\n\n';
+  md += '## Annotation\n\n' + bookData.annotation + '\n\n---\n\n';
+  md += bookData.content;
+  download(bookData.selected.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.md', md, 'text/markdown');
+}
+
+function downloadJSON() {
+  var meta = {
+    title: bookData.selected.title,
+    author: bookData.selected.author,
+    genre: bookData.selected.genre,
+    quote: bookData.selected.quote,
+    annotation: bookData.annotation,
+    generated: new Date().toISOString(),
+    generator: 'BOOKFORGE v1.0'
+  };
+  download('metadata.json', JSON.stringify(meta, null, 2), 'application/json');
+}
+
+function downloadHTML() {
+  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escHtml(bookData.selected.title) + '</title>';
+  fullHtml += '<style>body{background:#0a0a0f;color:#c8c8d8;font-family:Georgia,serif;max-width:600px;margin:40px auto;padding:20px;line-height:1.8;}';
+  fullHtml += 'h1{font-size:24px;color:#00ccff;text-align:center;margin-bottom:4px;}';
+  fullHtml += '.author{text-align:center;color:#666;font-size:14px;margin-bottom:20px;}';
+  fullHtml += '.cover{text-align:center;margin-bottom:30px;}';
+  fullHtml += '.annotation{padding:16px;border:1px solid #2a2a3a;border-radius:4px;font-style:italic;margin-bottom:30px;}';
+  fullHtml += '.content{white-space:pre-wrap;}</style></head><body>';
+  fullHtml += '<div class="cover">' + bookData.coverSVG + '</div>';
+  fullHtml += '<h1>' + escHtml(bookData.selected.title) + '</h1>';
+  fullHtml += '<div class="author">by ' + escHtml(bookData.selected.author) + '</div>';
+  fullHtml += '<div class="annotation">' + escHtml(bookData.annotation) + '</div>';
+  fullHtml += '<div class="content">' + escHtml(bookData.content) + '</div>';
+  fullHtml += '</body></html>';
+  download(bookData.selected.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.html', fullHtml, 'text/html');
+}
+
+function download(filename, content, type) {
+  var blob = new Blob([content], {type: type});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Clock ──
+setInterval(function() {
+  var now = new Date();
+  var el = document.getElementById('clock-display');
+  if (el) el.textContent = now.toLocaleTimeString('en-US', {hour12:false});
+}, 1000);
+</script>
+</body>
+</html>
